@@ -1,0 +1,48 @@
+language: go
+
+go:
+  - 1.5
+  - 1.6
+  - 1.7
+  - 1.8
+  - 1.9
+  - master 
+  - release
+  - tip
+  
+env:
+  - GO15VENDOREXPERIMENT=1
+
+install: true
+
+matrix:
+  allow_failures:
+    - go: master
+  fast_finish: true
+
+notifications:
+  email: false
+ 
+before_script:
+  - go get -t -v ./...
+  - go get github.com/golang/lint/golint
+  - go get honnef.co/go/tools/cmd/megacheck
+  - go get github.com/fzipp/gocyclo
+  - go get github.com/mattn/goveralls
+  - go get honnef.co/go/tools/cmd/staticcheck
+  
+script:
+  - ./build
+  - go test -v $(go list ./... | grep -v /vendor/)
+  - go test -v -cover $(go list ./... | grep -v /vendor/)
+  - golint multus/multus.go
+  - bash <(curl -s https://codecov.io/bash)
+  - goveralls -service=travis-ci
+  - go vet -v $(go list ./... | grep -v /vendor/)
+  - megacheck $(go list ./... | grep -v /vendor/)
+  - gocyclo -over 19 $(go list ./... | grep -v /vendor/)
+  - staticcheck $(go list ./... | grep -v /vendor/)
+  
+#after_success:
+#  - bash <(curl -s https://codecov.io/bash)
+#  - goveralls -service=travis-ci
